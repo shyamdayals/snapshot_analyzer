@@ -11,6 +11,9 @@ Uses AWS CLI
 
 ## Running ##
 
-/home/shazari/scripts/aws/code/snapshot_analyzer/snapshot/snapshot.py
+/home/shazari/scripts/aws/code/snapshot_analyzer/snapshot/snapshot.py <command> <--project="PROJECT">
+
+"command" is list, start, or stop
+"Project" is project name which is optional
 
 
