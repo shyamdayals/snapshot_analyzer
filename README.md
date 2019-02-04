@@ -14,7 +14,9 @@ Uses AWS CLI
 /home/shazari/scripts/aws/code/snapshot_analyzer/snapshot/snapshot.py <command> <subcommand> <--project="PROJECT">
 
 "command" is instances, volumes, or snapshots
+
 "subcommand" - depends on command
+
 "Project" is project name which is optional
 
 
