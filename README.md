@@ -11,10 +11,10 @@ Uses AWS CLI
 
 ## Running ##
 
-/home/shazari/scripts/aws/code/snapshot_analyzer/snapshot/snapshot.py <command> <--project="PROJECT">
+/home/shazari/scripts/aws/code/snapshot_analyzer/snapshot/snapshot.py <command> <subcommand> <--project="PROJECT">
 
-"command" is list, start, or stop
-
+"command" is instances, volumes, or snapshots
+"subcommand" - depends on command
 "Project" is project name which is optional
 
 
