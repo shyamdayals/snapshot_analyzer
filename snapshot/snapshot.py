@@ -2,6 +2,7 @@
 import sys
 import boto3
 import click
+import botocore
 
 session = boto3.Session(profile_name='default',region_name='us-east-1')
 ec2 = session.resource('ec2')
@@ -15,6 +16,10 @@ def filter_instances(project):
 
     return instances
 
+def has_pending_snapshot(volume):
+    snapshots = list(volume.snapshots.all())
+    return snapshots and snapshots[0].state == 'pending'
+
 @click.group()
 def cli():
     """ snapshot.py manages snapshots """
@@ -27,7 +32,10 @@ def snapshots():
 @click.option('--project', default=None,
     help="Only snapshots for project (tag Project:<name>)")
 
-def list_snapshots(project):
+@click.option('--all', 'list_all', default=False, is_flag=True,
+    help="List all snapshots for each volume, not just most recent")
+
+def list_snapshots(project, list_all):
     "List EC2 Snapshots: "
     instances = filter_instances(project)
 
@@ -41,7 +49,9 @@ def list_snapshots(project):
                     s.state,
                     s.progress,
                     s.start_time.strftime("%c")
-                    )))
+                )))
+
+                if s.state == 'completed' and not list_all: break
     return
 
 @cli.group('volumes')
@@ -82,10 +92,19 @@ def create_snapshots(project):
     instances = filter_instances(project)
 
     for i in instances:
+        print("Stopping {0}...".format(i.id))
         i.stop()
+        i.wait_until_stopped()
         for v in i.volumes.all():
-            print("Creating Snapshot of {0}".format(v.id))
+            if has_pending_snapshot(v):
+                print(" Skipping {0}, snapshot already in progress".format(v.id))
+                continue
+            print("  Creating Snapshot of {0}".format(v.id))
             v.create_snapshot(Description="Created by Snapshot Analyzer")
+        print("Starting {0}...".format(i.id))
+        i.start()
+        i.wait_until_running()
+    print("Job's done !!!")
     return
 
 @instances.command('list')
@@ -117,8 +136,11 @@ def stop_instances(project):
 
     for i in instances:
         print("Stopping {0}...".format(i.id))
-        i.stop()
-
+        try:
+            i.stop()
+        except botcore.exceptions.ClientError as e:
+            print(" Could not stop {0}..".format(i.id) + str(e))
+            continue
     return
 
 @instances.command('start')
@@ -132,7 +154,11 @@ def start_instances(project):
 
     for i in instances:
         print("Starting {0}...".format(i.id))
-        i.start()
+        try:
+            i.start()
+        except botcore.exceptions.ClientError as e:
+            print(" Could not start {0}..".format(i.id) + str(e))
+            continue
 
     return
 
